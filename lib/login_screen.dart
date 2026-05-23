@@ -1,13 +1,5 @@
-import 'dart:async';
-import 'package:url_launcher/url_launcher.dart';
-import 'package:app_links/app_links.dart';
-
 import 'package:flutter/material.dart';
-import 'main.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'services/api_service.dart';
-
 
 class LoginScreen extends StatefulWidget{
   
@@ -26,11 +18,6 @@ class LoginScreen extends StatefulWidget{
 
 class _LoginScreenState extends State<LoginScreen>{
 
-  final AppLinks _appLinks = AppLinks();
-  StreamSubscription<Uri>? _linkSubscription;
-
-  final int vkAppId = 54596619;
-  final String vkRedirectUri = 'https://mokronos.ru/vk/mobile-callback';
 
   bool isRegister = false;
   final emailController = TextEditingController();
@@ -47,40 +34,8 @@ class _LoginScreenState extends State<LoginScreen>{
   @override
   void initState() {
     super.initState();
-
-    _linkSubscription = _appLinks.uriLinkStream.listen((uri) {
-      if (uri.scheme == 'mokronose' && uri.host == 'vk-auth') {
-        final token = uri.queryParameters['token'];
-
-        if (token != null) {
-          ApiService.token = token;
-          widget.onLoginSuccess(token);
-        }
-      }
-    });
   }
 
-  Future<void> loginWithVk() async {
-    final vkAuthUrl = Uri.https('oauth.vk.com', '/authorize', {
-      'client_id': vkAppId.toString(),
-      'redirect_uri': 'https://mokronos.ru/vk/mobile-callback',
-      'display': 'mobile',
-      'response_type': 'code',
-      'v': '5.199',
-    });
-    error = vkAuthUrl.toString();
-    setState(() {});
-    final opened = await launchUrl(
-      vkAuthUrl,
-      mode: LaunchMode.externalApplication,
-    );
-
-    if (!opened) {
-      setState(() {
-        error = 'Не удалось открыть VK';
-      });
-    }
-  }
 
 
   Future<void> login() async {
@@ -89,24 +44,29 @@ class _LoginScreenState extends State<LoginScreen>{
       error = null;
     });
 
-    final success = await ApiService.login(
-      email: emailController.text,
-      password: passwordController.text,
-    );
+    try {
+      final success = await ApiService.login(
+        email: emailController.text.trim(),
+        password: passwordController.text,
+      );
 
-    setState(() {
-      isLoading = false;
-    });
+      if (!success) {
+        setState(() {
+          error = 'Неверный email или пароль';
+        });
+        return;
+      }
 
-    if (!success) {
+      widget.onLoginSuccess(ApiService.token!);
+    } catch (e) {
       setState(() {
-        error = 'Неверный email или пароль';
+        error = e.toString();
       });
-
-      return;
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
     }
-
-    widget.onLoginSuccess(ApiService.token!);
   }
 
   Future<void> register() async {
@@ -311,7 +271,7 @@ class _LoginScreenState extends State<LoginScreen>{
                 style: FilledButton.styleFrom(
                   backgroundColor: const Color(0xFF0077FF),
                 ),
-                onPressed: isLoading ? null : loginWithVk,
+                onPressed:  null,
                 icon: const Text(
                   '',
                   style: TextStyle(

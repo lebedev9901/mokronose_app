@@ -9,28 +9,45 @@ class ApiService {
   static String? token;
 
   static Future<bool> login({
-    required String email,
-    required String password,
+  required String email,
+  required String password,
   }) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/login'),
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode({
-        'email': email,
-        'password': password,
-      }),
-    );
+    try {
+      final response = await http
+          .post(
+            Uri.parse('$baseUrl/login'),
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json',
+            },
+            body: jsonEncode({
+              'email': email,
+              'password': password,
+            }),
+          )
+          .timeout(const Duration(seconds: 15));
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      token = data['token'];
-      return true;
+      print('STATUS: ${response.statusCode}');
+      print('BODY: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        if (data['token'] == null) {
+          print('TOKEN IS NULL');
+          return false;
+        }
+
+        token = data['token'];
+
+        return true;
+      }
+
+      throw Exception('STATUS ${response.statusCode}: ${response.body}');
+    } catch (e) {
+      print('LOGIN ERROR: $e');
+      return false;
     }
-
-    return false;
   }
 
   static Future<List<Product>> getProducts() async {
