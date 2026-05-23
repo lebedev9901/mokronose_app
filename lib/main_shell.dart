@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:mokronose_app/profile_screen.dart';
 import 'main.dart';
+import 'cart_screen.dart';
+import 'catalog_screen.dart';
 
 class MainShell extends StatefulWidget {
   final VoidCallback? onLogout;
@@ -20,9 +23,9 @@ class _MainShellState extends State<MainShell> {
   Widget build(BuildContext context) {
     final screens = [
       HomeScreen(onLogout: widget.onLogout),
-      const Center(child: Text('Каталог')),
-      const Center(child: Text('Корзина')),
-      const Center(child: Text('Профиль')),
+      const CatalogScreen(),
+      const CartScreen(),
+      ProfileScreen(onLogout: widget.onLogout ?? () {}),
     ];
 
     return Scaffold(
@@ -41,8 +44,8 @@ class _MainShellState extends State<MainShell> {
             label: 'Главная',
           ),
           NavigationDestination(
-            icon: Icon(Icons.category_outlined),
-            selectedIcon: Icon(Icons.category),
+            icon: Icon(Icons.shop_2_outlined),
+            selectedIcon: Icon(Icons.shop_2_rounded),
             label: 'Каталог',
           ),
           NavigationDestination(
